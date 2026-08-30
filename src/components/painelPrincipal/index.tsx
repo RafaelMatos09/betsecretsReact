@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import {
   Bell,
   ChevronDown,
@@ -15,6 +15,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
 import { SettingsModal } from './components/SettingsModal'
 import { navGroups, navItemById, type NavItemId } from './data/navGroups'
+import { useClassificacao } from './hooks/useClassificacao'
 import { ClassificacaoView } from './views/ClassificacaoView'
 import { SectionView } from './views/SectionView'
 
@@ -59,12 +60,29 @@ export function PainelPrincipal() {
   const { user, logout } = useAuth()
   const [active, setActive] = useState<NavItemId>('classificacao')
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [favorite, setFavorite] = useState('Flamengo')
-  const [round, setRound] = useState('Rodada 21')
   const [refreshing, setRefreshing] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const {
+    teams,
+    stats,
+    loading,
+    error,
+    round,
+    favorite,
+    cycleFavorite,
+    refresh,
+  } = useClassificacao()
 
   const activeItem = navItemById[active]
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true)
+    try {
+      await refresh()
+    } finally {
+      setRefreshing(false)
+    }
+  }, [refresh])
 
   const content = useMemo(() => {
     if (active === 'classificacao') {
@@ -72,8 +90,11 @@ export function PainelPrincipal() {
         <ClassificacaoView
           favorite={favorite}
           round={round}
-          onRoundChange={setRound}
-          onFavoriteToggle={() => setFavorite((current) => (current === 'Flamengo' ? 'Palmeiras' : 'Flamengo'))}
+          teams={teams}
+          stats={stats}
+          loading={loading}
+          error={error}
+          onFavoriteToggle={cycleFavorite}
           onNavigate={setActive}
         />
       )
@@ -91,12 +112,7 @@ export function PainelPrincipal() {
 
     const section = sectionContent[active]
     return <SectionView activeId={active} title={section.title} description={section.description} />
-  }, [active, favorite, round])
-
-  function handleRefresh() {
-    setRefreshing(true)
-    window.setTimeout(() => setRefreshing(false), 800)
-  }
+  }, [active, favorite, round, teams, stats, loading, error, cycleFavorite])
 
   function handleNavClick(itemId: NavItemId, opensSettings?: boolean) {
     setActive(itemId)
@@ -250,7 +266,7 @@ export function PainelPrincipal() {
             >
               <Settings className="size-4" />
             </button>
-            <Button onClick={handleRefresh}>
+            <Button onClick={() => void handleRefresh()}>
               <RefreshCw className={`size-4 ${refreshing ? 'animate-spin' : ''}`} />
               <span className="hidden md:inline">Atualizar</span>
             </Button>

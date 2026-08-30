@@ -11,9 +11,14 @@ export interface Team {
   losses: number
   gf: number
   ga: number
+  saldo?: number
+  aproveitamento?: number
+  variacao?: number
   form: string[]
   color: string
   zone: TeamZone
+  escudo?: string
+  timeId?: number
 }
 
 export const teams: Team[] = [
