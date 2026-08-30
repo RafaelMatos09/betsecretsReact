@@ -1,4 +1,6 @@
 import { useState, type FormEvent } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { isAxiosError } from 'axios'
 import './styles.css'
 import {
   ArrowRight,
@@ -11,24 +13,54 @@ import {
   Sparkles,
   UserRound,
 } from 'lucide-react'
+import { useAuth } from '@/contexts/AuthContext'
 
 type AuthMode = 'login' | 'cadastro'
 
 export function AuthPanel() {
+  const navigate = useNavigate()
+  const { login, cadastrar, loading } = useAuth()
   const [mode, setMode] = useState<AuthMode>('login')
   const [showPassword, setShowPassword] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const isSignup = mode === 'cadastro'
 
   function changeMode(nextMode: AuthMode) {
     setMode(nextMode)
     setSubmitted(false)
+    setError(null)
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    setSubmitted(true)
+    setError(null)
+
+    const formData = new FormData(event.currentTarget)
+    const email = String(formData.get('email') ?? '').trim()
+    const senha = String(formData.get('password') ?? '')
+    const nome = String(formData.get('name') ?? '').trim()
+
+    try {
+      if (isSignup) {
+        await cadastrar({ nome, email, senha })
+      } else {
+        await login({ email, senha })
+      }
+      setSubmitted(true)
+    } catch (err) {
+      if (isAxiosError(err)) {
+        const message = err.response?.data?.mensagem ?? 'Não foi possível concluir a operação.'
+        setError(message)
+        return
+      }
+      setError('Erro inesperado. Tente novamente.')
+    }
+  }
+
+  function handleContinue() {
+    navigate('/', { replace: true })
   }
 
   return (
@@ -70,15 +102,16 @@ export function AuthPanel() {
               <div className="success-icon"><Check size={25} /></div>
               <h3>{isSignup ? 'Conta criada!' : 'Tudo certo!'}</h3>
               <p>{isSignup ? 'Seu acesso ao BetSecrets está pronto.' : 'Você será direcionado para seus palpites.'}</p>
-              <button type="button" className="primary-button" onClick={() => setSubmitted(false)}>Continuar <ArrowRight size={17} /></button>
+              <button type="button" className="primary-button" onClick={handleContinue}>Continuar <ArrowRight size={17} /></button>
             </div>
           ) : (
             <form onSubmit={handleSubmit}>
+              {error && <div className="auth-error" role="alert">{error}</div>}
               {isSignup && <label><span>Como podemos te chamar?</span><div className="input-wrap"><UserRound size={17} /><input required name="name" placeholder="Seu nome" autoComplete="name" /></div></label>}
               <label><span>E-mail</span><div className="input-wrap"><Mail size={17} /><input required type="email" name="email" placeholder="voce@email.com" autoComplete="email" /></div></label>
               <label><span>Senha</span><div className="input-wrap"><LockKeyhole size={17} /><input required minLength={6} type={showPassword ? 'text' : 'password'} name="password" placeholder="Mínimo de 6 caracteres" autoComplete={isSignup ? 'new-password' : 'current-password'} /><button type="button" className="icon-button" aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'} onClick={() => setShowPassword((value) => !value)}>{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></div></label>
               {isSignup ? <label className="check-label"><input required type="checkbox" /> <span>Eu concordo com os <a href="#termos">Termos de uso</a> e a Política de privacidade.</span></label> : <div className="form-options"><label className="check-label"><input type="checkbox" /> <span>Lembrar de mim</span></label><a href="#recuperar">Esqueci minha senha</a></div>}
-              <button type="submit" className="primary-button">{isSignup ? 'Criar minha conta' : 'Entrar na conta'} <ArrowRight size={17} /></button>
+              <button type="submit" className="primary-button" disabled={loading}>{loading ? 'Aguarde...' : isSignup ? 'Criar minha conta' : 'Entrar na conta'} <ArrowRight size={17} /></button>
             </form>
           )}
           <div className="secure-note"><ShieldCheck size={15} /> Seus dados estão protegidos e nunca serão compartilhados.</div>

@@ -1,11 +1,13 @@
-import AuthPanel from "../../components/painelLogin";
+import { Navigate } from 'react-router-dom'
+import { useAuth } from '@/contexts/AuthContext'
+import { AuthPanel } from '@/components/painelLogin'
 
-const MainPanelLogin = () => {
-  return (
-    <div> 
-    <AuthPanel />   
-    </div>
-  );
-};
+export default function MainPanelLogin() {
+  const { isAuthenticated } = useAuth()
 
-export default MainPanelLogin;
+  if (isAuthenticated) {
+    return <Navigate to="/" replace />
+  }
+
+  return <AuthPanel />
+}

@@ -1,8 +1,7 @@
-import MainPanelLogin from './pages/painelLogin'
+import { AppRoutes } from './routes'
 
 function App() {
-  return <MainPanelLogin />
+  return <AppRoutes />
 }
 
 export default App
-
