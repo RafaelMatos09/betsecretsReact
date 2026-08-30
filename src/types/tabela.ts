@@ -45,3 +45,31 @@ export interface ClassificacaoStats {
     nome: string
   }
 }
+
+export interface ResumoClassificacao {
+  lider: ClassificacaoStats['lider']
+  melhorAtaque: ClassificacaoStats['melhorAtaque']
+  melhorDefesa: {
+    nome: string
+    golsContra: number
+    jogos: number
+  }
+  mediaGolsPorJogo: number
+  rodadaAtual: number
+  totalRodadas: number
+}
+
+export interface ProjecaoTime {
+  timeId: number
+  nome: string
+  sigla: string
+  escudo: string
+  posicaoAtual: number
+  posicaoProjetada: number
+  pontosAtuais: number
+  pontosProjetados: number
+  jogosRestantes: number
+  variacaoPosicao: number
+  aproveitamento: number
+  zone: 'libertadores' | 'pre-libertadores' | 'sul-americana' | 'rebaixamento' | 'none'
+}

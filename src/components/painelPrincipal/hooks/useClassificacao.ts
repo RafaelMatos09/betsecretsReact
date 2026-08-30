@@ -9,6 +9,7 @@ const FAVORITE_KEY = 'betsecrets_favorite_team'
 
 interface UseClassificacaoResult {
   teams: Team[]
+  items: ClassificacaoItem[]
   stats: ClassificacaoStats | null
   loading: boolean
   error: string | null
@@ -74,5 +75,5 @@ export function useClassificacao(): UseClassificacaoResult {
     }
   }, [favorite, rawData])
 
-  return { teams, stats, loading, error, round, favorite, setFavorite, cycleFavorite, refresh }
+  return { teams, items: rawData, stats, loading, error, round, favorite, setFavorite, cycleFavorite, refresh }
 }

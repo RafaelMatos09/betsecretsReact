@@ -16,14 +16,12 @@ import { Button } from '@/components/ui/button'
 import { SettingsModal } from './components/SettingsModal'
 import { navGroups, navItemById, type NavItemId } from './data/navGroups'
 import { useClassificacao } from './hooks/useClassificacao'
+import { useAoVivo } from './hooks/useAoVivo'
 import { ClassificacaoView } from './views/ClassificacaoView'
+import { VisaoGeralView } from './views/VisaoGeralView'
 import { SectionView } from './views/SectionView'
 
-const sectionContent: Record<Exclude<NavItemId, 'classificacao' | 'configuracoes'>, { title: string; description: string }> = {
-  'visao-geral': {
-    title: 'Visão geral',
-    description: 'Resumo da temporada, destaques e indicadores principais da sua conta.',
-  },
+const sectionContent: Record<Exclude<NavItemId, 'classificacao' | 'configuracoes' | 'visao-geral'>, { title: string; description: string }> = {
   jogos: {
     title: 'Jogos',
     description: 'Acompanhe partidas da rodada, horários e resultados em tempo real.',
@@ -64,27 +62,56 @@ export function PainelPrincipal() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const {
     teams,
+    items: classificacaoItems,
     stats,
     loading,
     error,
     round,
     favorite,
     cycleFavorite,
-    refresh,
+    refresh: refreshClassificacao,
   } = useClassificacao()
+  const {
+    partidas,
+    stats: aoVivoStats,
+    loading: aoVivoLoading,
+    error: aoVivoError,
+    refresh: refreshAoVivo,
+  } = useAoVivo()
 
   const activeItem = navItemById[active]
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true)
     try {
-      await refresh()
+      if (active === 'visao-geral') {
+        await Promise.all([refreshAoVivo(), refreshClassificacao()])
+      } else {
+        await refreshClassificacao()
+      }
     } finally {
       setRefreshing(false)
     }
-  }, [refresh])
+  }, [active, refreshAoVivo, refreshClassificacao])
 
   const content = useMemo(() => {
+    if (active === 'visao-geral') {
+      return (
+        <VisaoGeralView
+          partidas={partidas}
+          stats={aoVivoStats}
+          loading={aoVivoLoading}
+          error={aoVivoError}
+          classificacaoItems={classificacaoItems}
+          classificacaoTeams={teams}
+          classificacaoLoading={loading}
+          classificacaoError={error}
+          favorite={favorite}
+          onNavigate={setActive}
+        />
+      )
+    }
+
     if (active === 'classificacao') {
       return (
         <ClassificacaoView
@@ -112,7 +139,25 @@ export function PainelPrincipal() {
 
     const section = sectionContent[active]
     return <SectionView activeId={active} title={section.title} description={section.description} />
-  }, [active, favorite, round, teams, stats, loading, error, cycleFavorite])
+  }, [
+    active,
+    favorite,
+    round,
+    teams,
+    stats,
+    loading,
+    error,
+    cycleFavorite,
+    partidas,
+    aoVivoStats,
+    aoVivoLoading,
+    aoVivoError,
+    classificacaoItems,
+    teams,
+    loading,
+    error,
+    favorite,
+  ])
 
   function handleNavClick(itemId: NavItemId, opensSettings?: boolean) {
     setActive(itemId)
