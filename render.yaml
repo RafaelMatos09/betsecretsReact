@@ -1,0 +1,13 @@
+# Blueprint do Render — https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: betsecrets-front
+    runtime: docker
+    plan: free
+    region: sao
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: VITE_API_URL
+        value: https://betsecrets-api.onrender.com
+      - key: VITE_CAMPEONATO_API_URL
+        value: /api/campeonato

@@ -16,7 +16,6 @@ import { Button } from '@/components/ui/button'
 import { SettingsModal } from './components/SettingsModal'
 import { navGroups, navItemById, type NavItemId } from './data/navGroups'
 import { useClassificacao } from './hooks/useClassificacao'
-import { useAoVivo } from './hooks/useAoVivo'
 import { ClassificacaoView } from './views/ClassificacaoView'
 import { VisaoGeralView } from './views/VisaoGeralView'
 import { SectionView } from './views/SectionView'
@@ -63,6 +62,8 @@ export function PainelPrincipal() {
   const {
     teams,
     items: classificacaoItems,
+    matches,
+    competitionName,
     stats,
     loading,
     error,
@@ -71,41 +72,29 @@ export function PainelPrincipal() {
     cycleFavorite,
     refresh: refreshClassificacao,
   } = useClassificacao()
-  const {
-    partidas,
-    stats: aoVivoStats,
-    loading: aoVivoLoading,
-    error: aoVivoError,
-    refresh: refreshAoVivo,
-  } = useAoVivo()
 
   const activeItem = navItemById[active]
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true)
     try {
-      if (active === 'visao-geral') {
-        await Promise.all([refreshAoVivo(), refreshClassificacao()])
-      } else {
-        await refreshClassificacao()
-      }
+      await refreshClassificacao()
     } finally {
       setRefreshing(false)
     }
-  }, [active, refreshAoVivo, refreshClassificacao])
+  }, [refreshClassificacao])
 
   const content = useMemo(() => {
     if (active === 'visao-geral') {
       return (
         <VisaoGeralView
-          partidas={partidas}
-          stats={aoVivoStats}
-          loading={aoVivoLoading}
-          error={aoVivoError}
+          matches={matches}
+          competitionName={competitionName}
+          round={round}
           classificacaoItems={classificacaoItems}
           classificacaoTeams={teams}
-          classificacaoLoading={loading}
-          classificacaoError={error}
+          loading={loading}
+          error={error}
           favorite={favorite}
           onNavigate={setActive}
         />
@@ -148,15 +137,9 @@ export function PainelPrincipal() {
     loading,
     error,
     cycleFavorite,
-    partidas,
-    aoVivoStats,
-    aoVivoLoading,
-    aoVivoError,
+    matches,
+    competitionName,
     classificacaoItems,
-    teams,
-    loading,
-    error,
-    favorite,
   ])
 
   function handleNavClick(itemId: NavItemId, opensSettings?: boolean) {
