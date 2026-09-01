@@ -8,6 +8,6 @@ services:
     dockerfilePath: ./Dockerfile
     envVars:
       - key: VITE_API_URL
-        value: https://betsecretsc.onrender.com
+        value: ""
       - key: VITE_CAMPEONATO_API_URL
         value: /api/campeonato
