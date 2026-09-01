@@ -8,6 +8,7 @@ const rootDir = path.dirname(fileURLToPath(import.meta.url))
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, rootDir, '')
+  const apiProxyTarget = env.VITE_API_PROXY_TARGET || 'http://localhost:5027'
 
   return {
     plugins: [react(), tailwindcss()],
@@ -19,11 +20,16 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 5174,
       proxy: {
-        // Em dev, o front chama /api/campeonato/a e o Vite repassa para a API no Render
+        // API do Brasileirão (rota mais específica primeiro)
         '/api/campeonato': {
           target: env.VITE_CAMPEONATO_PROXY_TARGET || 'https://campeonatobrasileiroapi.onrender.com',
           changeOrigin: true,
           rewrite: (proxyPath) => proxyPath.replace(/^\/api\/campeonato/, ''),
+        },
+        // Backend BetSecrets (login, usuários) — evita CORS no dev local
+        '/api': {
+          target: apiProxyTarget,
+          changeOrigin: true,
         },
       },
     },
