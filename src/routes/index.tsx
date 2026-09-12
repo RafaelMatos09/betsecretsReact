@@ -18,6 +18,14 @@ export function AppRoutes() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/time-society"
+            element={
+              <ProtectedRoute>
+                <MainPanelPrincipal />
+              </ProtectedRoute>
+            }
+          />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

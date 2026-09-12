@@ -2,6 +2,7 @@ import {
   BarChart3,
   CalendarDays,
   ClipboardList,
+  Goal,
   LayoutDashboard,
   Settings,
   ShieldCheck,
@@ -18,12 +19,14 @@ export type NavItemId =
   | 'painel-palpites'
   | 'ranking'
   | 'times-campeonatos'
+  | 'time-society'
   | 'configuracoes'
 
 export interface NavItem {
   id: NavItemId
   label: string
   icon: LucideIcon
+  path?: string
   count?: string
   opensSettings?: boolean
 }
@@ -54,6 +57,7 @@ export const navGroups: NavGroup[] = [
     label: 'Gerenciar',
     items: [
       { id: 'times-campeonatos', label: 'Times e campeonatos', icon: ShieldCheck },
+      { id: 'time-society', label: 'Time Society', icon: Goal, path: '/time-society' },
       { id: 'configuracoes', label: 'Configurações', icon: Settings, opensSettings: true },
     ],
   },

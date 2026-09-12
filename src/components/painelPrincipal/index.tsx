@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   Bell,
   ChevronDown,
@@ -10,7 +10,7 @@ import {
   Settings,
   X,
 } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
 import { SettingsModal } from './components/SettingsModal'
@@ -19,8 +19,9 @@ import { useClassificacao } from './hooks/useClassificacao'
 import { ClassificacaoView } from './views/ClassificacaoView'
 import { VisaoGeralView } from './views/VisaoGeralView'
 import { SectionView } from './views/SectionView'
+import TimeSocietyRoute from '@/pages/timeSociety'
 
-const sectionContent: Record<Exclude<NavItemId, 'classificacao' | 'configuracoes' | 'visao-geral'>, { title: string; description: string }> = {
+const sectionContent: Record<Exclude<NavItemId, 'classificacao' | 'configuracoes' | 'visao-geral' | 'time-society'>, { title: string; description: string }> = {
   jogos: {
     title: 'Jogos',
     description: 'Acompanhe partidas da rodada, horários e resultados em tempo real.',
@@ -54,8 +55,11 @@ function getUserInitials(name?: string) {
 
 export function PainelPrincipal() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { user, logout } = useAuth()
-  const [active, setActive] = useState<NavItemId>('classificacao')
+  const [active, setActive] = useState<NavItemId>(
+    location.pathname === '/time-society' ? 'time-society' : 'classificacao',
+  )
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -74,6 +78,16 @@ export function PainelPrincipal() {
   } = useClassificacao()
 
   const activeItem = navItemById[active]
+
+  useEffect(() => {
+    if (location.pathname === '/time-society') {
+      setActive('time-society')
+      return
+    }
+    if (location.pathname === '/' && active === 'time-society') {
+      setActive('classificacao')
+    }
+  }, [location.pathname, active])
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true)
@@ -116,6 +130,10 @@ export function PainelPrincipal() {
       )
     }
 
+    if (active === 'time-society') {
+      return <TimeSocietyRoute />
+    }
+
     if (active === 'configuracoes') {
       return (
         <SectionView
@@ -145,6 +163,8 @@ export function PainelPrincipal() {
   function handleNavClick(itemId: NavItemId, opensSettings?: boolean) {
     setActive(itemId)
     setSidebarOpen(false)
+    if (itemId === 'time-society') navigate('/time-society')
+    else if (location.pathname !== '/') navigate('/')
     if (opensSettings) setSettingsOpen(true)
   }
 
@@ -294,17 +314,19 @@ export function PainelPrincipal() {
             >
               <Settings className="size-4" />
             </button>
+            {active !== 'time-society' && (
             <Button onClick={() => void handleRefresh()}>
               <RefreshCw className={`size-4 ${refreshing ? 'animate-spin' : ''}`} />
               <span className="hidden md:inline">Atualizar</span>
             </Button>
+            )}
             <Button variant="outline" size="icon" onClick={handleLogout} aria-label="Sair">
               <LogOut className="size-4" />
             </Button>
           </div>
         </header>
 
-        <div className="mx-auto max-w-[1500px] px-5 py-7 md:px-10 md:py-10">{content}</div>
+        <div className={`mx-auto px-5 py-7 md:px-10 md:py-10 ${active === 'time-society' ? 'max-w-[1700px]' : 'max-w-[1500px]'}`}>{content}</div>
       </div>
 
       <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
