@@ -219,10 +219,10 @@ function TimeSocietyPage() {
         await timeSocietyService.atualizarJogador({ ...payload, id: playerModal.player.jogadorId })
         toast('Jogador atualizado.')
       } else {
-        const created = await timeSocietyService.cadastrarJogador(payload)
-        if (!created.id) throw new Error('Jogador criado sem identificador.')
+        await timeSocietyService.cadastrarJogador(payload)
+        const jogadorId = await timeSocietyService.localizarJogadorCadastrado(payload)
         await timeSocietyService.cadastrarJogadorTime({
-          jogadorId: created.id,
+          jogadorId,
           timeId,
           numeroCamisa: values.numeroCamisa,
         })

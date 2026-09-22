@@ -16,6 +16,31 @@ export async function cadastrarJogador(payload: Jogador): Promise<Jogador> {
   return data
 }
 
+/**
+ * Confirma o identificador do atleta depois do cadastro. Alguns retornos da API
+ * de cadastro não trazem o atleta persistido corretamente; por isso o vínculo
+ * com o time não deve depender somente da resposta do POST.
+ */
+export async function localizarJogadorCadastrado(payload: Jogador): Promise<number> {
+  const jogadores = await buscarJogadores(payload.nome?.trim() ?? '')
+  const nome = payload.nome?.trim().toLocaleLowerCase()
+  const apelido = payload.apelido?.trim().toLocaleLowerCase()
+  const numeroPreferido = payload.numeroPreferido
+
+  const candidatos = jogadores.filter((jogador) => {
+    const mesmoNome = jogador.nome?.trim().toLocaleLowerCase() === nome
+    const mesmoApelido = jogador.apelido?.trim().toLocaleLowerCase() === apelido
+    const mesmoNumero = jogador.numeroPreferido === numeroPreferido
+    return mesmoNome && mesmoApelido && mesmoNumero && typeof jogador.id === 'number'
+  })
+
+  // Em caso de nomes repetidos, o maior ID é o último cadastro realizado.
+  const jogadorCriado = candidatos.sort((a, b) => (b.id ?? 0) - (a.id ?? 0))[0]
+  if (jogadorCriado?.id) return jogadorCriado.id
+
+  throw new Error('Não foi possível localizar o identificador do jogador cadastrado.')
+}
+
 export async function consultarJogador(id: number): Promise<Jogador> {
   const { data } = await api.get<Jogador>(`/api/Jogador/consultar-jogador/${id}`)
   return data
