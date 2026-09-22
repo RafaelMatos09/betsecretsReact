@@ -24,14 +24,10 @@ export async function cadastrarJogador(payload: Jogador): Promise<Jogador> {
 export async function localizarJogadorCadastrado(payload: Jogador): Promise<number> {
   const jogadores = await buscarJogadores(payload.nome?.trim() ?? '')
   const nome = payload.nome?.trim().toLocaleLowerCase()
-  const apelido = payload.apelido?.trim().toLocaleLowerCase()
-  const numeroPreferido = payload.numeroPreferido
 
   const candidatos = jogadores.filter((jogador) => {
     const mesmoNome = jogador.nome?.trim().toLocaleLowerCase() === nome
-    const mesmoApelido = jogador.apelido?.trim().toLocaleLowerCase() === apelido
-    const mesmoNumero = jogador.numeroPreferido === numeroPreferido
-    return mesmoNome && mesmoApelido && mesmoNumero && typeof jogador.id === 'number'
+    return mesmoNome && typeof jogador.id === 'number'
   })
 
   // Em caso de nomes repetidos, o maior ID é o último cadastro realizado.
