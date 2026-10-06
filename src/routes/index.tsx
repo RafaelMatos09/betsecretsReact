@@ -26,6 +26,30 @@ export function AppRoutes() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/calendario"
+            element={
+              <ProtectedRoute>
+                <MainPanelPrincipal />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/relatorio-jogadores"
+            element={
+              <ProtectedRoute>
+                <MainPanelPrincipal />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/estatisticas"
+            element={
+              <ProtectedRoute>
+                <MainPanelPrincipal />
+              </ProtectedRoute>
+            }
+          />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

@@ -10,9 +10,9 @@ import {
   LockKeyhole,
   Mail,
   ShieldCheck,
-  Sparkles,
   UserRound,
 } from 'lucide-react'
+import { BairroFutLogo } from '@/components/brand/BairroFutLogo'
 import { useAuth } from '@/contexts/AuthContext'
 
 type AuthMode = 'login' | 'cadastro'
@@ -64,25 +64,22 @@ export function AuthPanel() {
   }
 
   return (
-    <section className="auth-shell" aria-label="Acesso ao BetSecrets">
-      <div className="auth-brand" aria-label="BetSecrets">
-        <div className="brand-mark"><Sparkles size={18} strokeWidth={2.5} /></div>
-        <span>bet<span>secrets</span></span>
-      </div>
+    <section className="auth-shell" aria-label="Acesso ao BairroFut">
+      <BairroFutLogo wordmark subtitle="o futebol do bairro" markClassName="size-11" />
 
       <div className="auth-grid">
         <div className="auth-intro">
-          <div className="eyebrow"><span className="live-dot" /> comunidade privada de bets</div>
-          <h1>Suas melhores apostas, <em>em segredo.</em></h1>
-          <p>Entre para acompanhar palpites exclusivos, compartilhar estratégias e apostar com quem entende do jogo.</p>
+          <div className="eyebrow"><span className="live-dot" /> pelada, tabela e calendário</div>
+          <h1>O futebol da sua rua, <em>num só lugar.</em></h1>
+          <p>Monte o time do bairro, marque os jogos e acompanhe o Campeonato Brasileiro sem misturar as duas coisas.</p>
           <div className="trust-row">
-            <div className="avatar-stack" aria-hidden="true"><span>LC</span><span>RM</span><span>JP</span><b>+2k</b></div>
-            <span>apostadores já fazem parte</span>
+            <div className="avatar-stack" aria-hidden="true"><span>BF</span><span>TS</span><span>CB</span></div>
+            <span>elenco, agenda e Brasileirão</span>
           </div>
           <div className="quote-card">
-            <div className="quote-top"><span className="quote-stars">★★★★★</span><span>membro verificado</span></div>
-            <p>“O lugar onde meus palpites finalmente começaram a bater.”</p>
-            <strong>Xuxeluf Brelie <small>• há 2 min</small></strong>
+            <div className="quote-top"><span className="quote-stars">campo · quadra · rua</span><span>bairro</span></div>
+            <p>“Quarta tem jogo no campinho. A escalação já está no BairroFut.”</p>
+            <strong>Agenda do bairro <small>• temporada atual</small></strong>
           </div>
         </div>
 
@@ -94,14 +91,14 @@ export function AuthPanel() {
 
           <div className="form-heading">
             <h2>{isSignup ? 'Crie seu acesso' : 'Bem-vindo de volta'}</h2>
-            <p>{isSignup ? 'Comece a jogar junto com a comunidade.' : 'Acesse sua central de palpites.'}</p>
+            <p>{isSignup ? 'Entre para o futebol do seu bairro.' : 'Acesse o campinho, a agenda e o Brasileirão.'}</p>
           </div>
 
           {submitted ? (
             <div className="success-state" role="status">
               <div className="success-icon"><Check size={25} /></div>
               <h3>{isSignup ? 'Conta criada!' : 'Tudo certo!'}</h3>
-              <p>{isSignup ? 'Seu acesso ao BetSecrets está pronto.' : 'Você será direcionado para seus palpites.'}</p>
+              <p>{isSignup ? 'Seu acesso ao BairroFut está pronto.' : 'Você será direcionado para o painel do bairro.'}</p>
               <button type="button" className="primary-button" onClick={handleContinue}>Continuar <ArrowRight size={17} /></button>
             </div>
           ) : (
@@ -117,7 +114,7 @@ export function AuthPanel() {
           <div className="secure-note"><ShieldCheck size={15} /> Seus dados estão protegidos e nunca serão compartilhados.</div>
         </div>
       </div>
-      <footer>© 2024 BetSecrets <span>•</span> Jogue com responsabilidade. 18+</footer>
+      <footer>© 2026 BairroFut <span>•</span> Futebol de bairro, com respeito. 18+</footer>
     </section>
   )
 }

@@ -1,20 +1,26 @@
 import axios from 'axios'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { AlertDialog } from '@/components/ui/alert-dialog'
 import { ToastProvider, useToast } from '@/components/ui/toast'
+import { AgendarJogoModal } from '@/components/calendario/AgendarJogoModal'
 import { BenchPlayers } from '@/components/timeSociety/BenchPlayers'
 import { ElencoPanel } from '@/components/timeSociety/ElencoPanel'
 import { PlayerDrawer } from '@/components/timeSociety/PlayerDrawer'
 import { PlayerModal } from '@/components/timeSociety/PlayerModal'
 import { ScalePlayerModal } from '@/components/timeSociety/ScalePlayerModal'
 import { SoccerField } from '@/components/timeSociety/SoccerField'
+import { SocietyCalendarBar } from '@/components/timeSociety/SocietyCalendarBar'
 import { TeamEditModal } from '@/components/timeSociety/TeamEditModal'
 import { TeamHeader } from '@/components/timeSociety/TeamHeader'
 import { getFormation } from '@/lib/formacoes'
 import { readEscalacao, readSelectedTimeId, writeEscalacao, writeSelectedTimeId } from '@/lib/escalacaoStorage'
 import { categoriaPosicao, emptyStats } from '@/lib/jogadorUtils'
+import * as calendarioService from '@/services/calendarioService'
 import * as timeSocietyService from '@/services/timeSocietyService'
+import type { AgendarJogoValues, CalendarioJogo, EscalacaoJogoItem } from '@/types/calendario'
 import type { Campeonato, EscalacaoState, TimeSociety } from '@/types/escalacao'
+import type { Formation } from '@/types/formacao'
 import type { Jogador, JogadorFormValues, JogadorTime, PlayerStatus, PosicaoFiltro } from '@/types/jogador'
 
 function errorMessage(err: unknown, fallback: string) {
@@ -30,6 +36,58 @@ function toDateInput(value?: string | null) {
   return value.slice(0, 10)
 }
 
+function buildJogadores(escalacao: EscalacaoState, formation: Formation, elenco: JogadorTime[]): EscalacaoJogoItem[] {
+  const used = new Set<number>()
+  const titulares = formation.slots.flatMap((slot) => {
+    const elencoId = escalacao.slots[slot.id]
+    const player = elenco.find((item) => item.id === elencoId)
+    if (!player) return []
+    used.add(player.id)
+    return [
+      {
+        jogadorId: player.jogadorId,
+        titular: true,
+        numeroCamisa: player.numeroCamisa,
+        posicao: `${escalacao.formationId}:${slot.id}`,
+        minutoEntrada: null,
+      },
+    ]
+  })
+
+  const reservas = elenco
+    .filter((player) => !used.has(player.id))
+    .map((player) => ({
+      jogadorId: player.jogadorId,
+      titular: false,
+      numeroCamisa: player.numeroCamisa,
+      posicao: player.posicao ?? null,
+      minutoEntrada: null,
+    }))
+
+  return [...titulares, ...reservas]
+}
+
+function stateFromEscalacao(rows: EscalacaoJogoItem[], elenco: JogadorTime[]): EscalacaoState | null {
+  const titulares = rows.filter((row) => row.titular && row.posicao?.includes(':'))
+  if (!titulares.length) return null
+  const formationId = titulares[0].posicao?.split(':')[0] || '1-2-2-1'
+  const slots: Record<string, number> = {}
+  for (const row of titulares) {
+    const slotId = row.posicao?.split(':')[1]
+    const player = elenco.find((item) => item.jogadorId === row.jogadorId)
+    if (player && slotId) slots[slotId] = player.id
+  }
+  return { formationId, slots }
+}
+
+function proximoJogo(agenda: CalendarioJogo[]) {
+  const hoje = new Date().toISOString().slice(0, 10)
+  return (
+    agenda.find((jogo) => (jogo.dataPrevista ?? '') >= hoje && jogo.status !== 'cancelado' && jogo.status !== 'realizado') ??
+    agenda[0]
+  )
+}
+
 export default function TimeSocietyRoute() {
   return (
     <ToastProvider>
@@ -39,11 +97,13 @@ export default function TimeSocietyRoute() {
 }
 
 function TimeSocietyPage() {
+  const navigate = useNavigate()
   const { toast } = useToast()
   const [times, setTimes] = useState<TimeSociety[]>([])
   const [timeId, setTimeId] = useState<number | null>(readSelectedTimeId)
   const [elenco, setElenco] = useState<JogadorTime[]>([])
   const [campeonato, setCampeonato] = useState<Campeonato>()
+  const [campeonatos, setCampeonatos] = useState<Campeonato[]>([])
   const [golsByJogador, setGolsByJogador] = useState<Map<number, number>>(new Map())
   const [detailsById, setDetailsById] = useState<Map<number, Jogador>>(new Map())
   const [escalacao, setEscalacao] = useState<EscalacaoState>({ formationId: '1-2-2-1', slots: {} })
@@ -60,6 +120,9 @@ function TimeSocietyPage() {
   const [drawerPlayer, setDrawerPlayer] = useState<JogadorTime | null>(null)
   const [removePlayer, setRemovePlayer] = useState<JogadorTime | null>(null)
   const [editTeamOpen, setEditTeamOpen] = useState(false)
+  const [jogos, setJogos] = useState<CalendarioJogo[]>([])
+  const [jogoId, setJogoId] = useState<number | null>(null)
+  const [scheduleOpen, setScheduleOpen] = useState(false)
 
   const time = times.find((item) => item.id === timeId)
   const formation = getFormation(escalacao.formationId)
@@ -97,6 +160,7 @@ function TimeSocietyPage() {
           const status = item.status?.toLowerCase() ?? ''
           return status.includes('ativo') || status.includes('andamento')
         }) ?? campeonatos[0]
+      setCampeonatos(campeonatos)
       setCampeonato(atualCampeonato)
 
       if (atualCampeonato?.id) {
@@ -108,12 +172,18 @@ function TimeSocietyPage() {
 
       if (!currentId) {
         setElenco([])
+        setJogos([])
+        setJogoId(null)
         return
       }
 
       const lista = await timeSocietyService.listarElenco(currentId)
       setElenco(lista)
       setEscalacao(readEscalacao(currentId))
+
+      const agenda = await calendarioService.listarJogos({ timeId: currentId }).catch(() => [] as CalendarioJogo[])
+      setJogos(agenda)
+      setJogoId((current) => (current && agenda.some((jogo) => jogo.id === current) ? current : (proximoJogo(agenda)?.id ?? null)))
 
       const details = await Promise.all(
         lista.map(async (item) => {
@@ -273,10 +343,72 @@ function TimeSocietyPage() {
     }
   }
 
-  function saveLineup() {
+  const jogoSelecionado = jogos.find((jogo) => jogo.id === jogoId) ?? null
+
+  useEffect(() => {
+    if (!jogoSelecionado?.partidaId || !timeId || elenco.length === 0) return
+    let cancel = false
+    void calendarioService
+      .listarEscalacaoTime(jogoSelecionado.partidaId, timeId)
+      .then((rows) => {
+        if (cancel) return
+        const next = stateFromEscalacao(rows, elenco)
+        if (next) setEscalacao(next)
+      })
+      .catch(() => undefined)
+    return () => {
+      cancel = true
+    }
+  }, [jogoSelecionado?.id, jogoSelecionado?.partidaId, timeId, elenco])
+
+  async function saveLineup() {
     if (!timeId) return
     writeEscalacao(timeId, escalacao)
-    toast('Escalação salva neste dispositivo.')
+    if (!jogoSelecionado?.id) {
+      toast('Escalação salva neste dispositivo. Agende um jogo para gravar no calendário.', 'error')
+      setScheduleOpen(true)
+      return
+    }
+    if (Object.keys(escalacao.slots).length === 0) {
+      toast('Coloque ao menos um titular em campo.', 'error')
+      return
+    }
+
+    setSaving(true)
+    try {
+      const oficial = jogoSelecionado.partidaId
+        ? jogoSelecionado
+        : await calendarioService.oficializarJogo(jogoSelecionado.id)
+      if (!oficial.partidaId) throw new Error('Partida não vinculada ao calendário.')
+      await calendarioService.salvarEscalacaoTime({
+        partidaId: oficial.partidaId,
+        timeId,
+        jogadores: buildJogadores(escalacao, formation, elenco),
+      })
+      setJogos((current) => current.map((item) => (item.id === oficial.id ? { ...item, ...oficial } : item)))
+      toast('Escalação gravada no jogo do calendário.')
+    } catch (err) {
+      toast(errorMessage(err, 'Não foi possível gravar a escalação.'), 'error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function handleSchedule(values: AgendarJogoValues) {
+    if (!timeId) return
+    setSaving(true)
+    try {
+      const created = await calendarioService.cadastrarJogo(values)
+      const agenda = await calendarioService.listarJogos({ timeId })
+      setJogos(agenda)
+      setJogoId(created.id ?? proximoJogo(agenda)?.id ?? null)
+      setScheduleOpen(false)
+      toast('Jogo agendado no calendário.')
+    } catch (err) {
+      toast(errorMessage(err, 'Não foi possível agendar o jogo.'), 'error')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const bench = elenco.filter((player) => !starters.has(player.id))
@@ -335,7 +467,20 @@ function TimeSocietyPage() {
         onChangeFormation={handleChangeFormation}
         onEditTeam={() => setEditTeamOpen(true)}
         onNewPlayer={() => void openCreatePlayer()}
-        onSaveLineup={saveLineup}
+        onSaveLineup={() => void saveLineup()}
+        savingLineup={saving}
+      />
+
+      <SocietyCalendarBar
+        jogos={jogos}
+        jogoId={jogoId}
+        onSelectJogo={(id) => {
+          setJogoId(id)
+          const jogo = jogos.find((item) => item.id === id)
+          if (timeId && !jogo?.partidaId) setEscalacao(readEscalacao(timeId))
+        }}
+        onOpenCalendar={() => navigate(timeId ? `/calendario?timeId=${timeId}` : '/calendario')}
+        onSchedule={() => setScheduleOpen(true)}
       />
 
       <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
@@ -404,6 +549,16 @@ function TimeSocietyPage() {
         saving={saving}
         onClose={() => setEditTeamOpen(false)}
         onSave={(payload) => void saveTeam(payload)}
+      />
+      <AgendarJogoModal
+        open={scheduleOpen}
+        saving={saving}
+        campeonatos={campeonatos}
+        times={times}
+        campeonatoId={campeonato?.id}
+        timeFixoId={timeId ?? undefined}
+        onClose={() => setScheduleOpen(false)}
+        onSave={(values) => void handleSchedule(values)}
       />
       <AlertDialog
         open={Boolean(removePlayer)}

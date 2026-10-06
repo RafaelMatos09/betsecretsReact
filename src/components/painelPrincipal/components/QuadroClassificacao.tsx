@@ -10,6 +10,7 @@ interface QuadroClassificacaoProps {
   loading: boolean
   error: string | null
   favorite?: string
+  competitionName?: string
 }
 
 function zoneBarClass(zone: ProjecaoTime['zone']): string {
@@ -59,6 +60,7 @@ export function QuadroClassificacao({
   loading,
   error,
   favorite,
+  competitionName,
 }: QuadroClassificacaoProps) {
   const liderTeam = teams.find((team) => team.pos === 1)
 
@@ -68,7 +70,7 @@ export function QuadroClassificacao({
         <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
           <div>
             <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-              Brasileirão Série A
+              {competitionName || 'Campeonato Brasileiro'}
             </p>
             <h3 className="mt-1 font-display text-xl font-bold tracking-tight">
               Quadro da temporada

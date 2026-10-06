@@ -178,6 +178,7 @@ export function VisaoGeralView({
         loading={loading}
         error={error}
         favorite={favorite}
+        competitionName={competitionName}
       />
 
       <div className="mb-5 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">

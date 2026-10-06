@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   Bell,
-  ChevronDown,
-  Goal,
   LogOut,
   Menu,
   MoreHorizontal,
@@ -12,16 +10,21 @@ import {
 } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
+import { BairroFutLogo } from '@/components/brand/BairroFutLogo'
 import { Button } from '@/components/ui/button'
 import { SettingsModal } from './components/SettingsModal'
-import { navGroups, navItemById, type NavItemId } from './data/navGroups'
+import { navGroups, navItemById, navSourceById, type NavItemId } from './data/navGroups'
 import { useClassificacao } from './hooks/useClassificacao'
+import type { SerieCampeonato } from '@/services/tabelaService'
 import { ClassificacaoView } from './views/ClassificacaoView'
 import { VisaoGeralView } from './views/VisaoGeralView'
 import { SectionView } from './views/SectionView'
+import CalendarioRoute from '@/pages/calendario'
+import EstatisticasPartidasRoute from '@/pages/estatisticasPartidas'
+import RelatorioJogadoresRoute from '@/pages/relatorioJogadores'
 import TimeSocietyRoute from '@/pages/timeSociety'
 
-const sectionContent: Record<Exclude<NavItemId, 'classificacao' | 'configuracoes' | 'visao-geral' | 'time-society'>, { title: string; description: string }> = {
+const sectionContent: Record<Exclude<NavItemId, 'classificacao' | 'configuracoes' | 'visao-geral' | 'time-society' | 'calendario' | 'relatorio-jogadores' | 'estatisticas'>, { title: string; description: string }> = {
   jogos: {
     title: 'Jogos',
     description: 'Acompanhe partidas da rodada, horários e resultados em tempo real.',
@@ -44,8 +47,16 @@ const sectionContent: Record<Exclude<NavItemId, 'classificacao' | 'configuracoes
   },
 }
 
+function routeToNav(pathname: string): NavItemId | null {
+  if (pathname === '/time-society') return 'time-society'
+  if (pathname === '/calendario') return 'calendario'
+  if (pathname === '/relatorio-jogadores') return 'relatorio-jogadores'
+  if (pathname === '/estatisticas') return 'estatisticas'
+  return null
+}
+
 function getUserInitials(name?: string) {
-  if (!name) return 'BS'
+  if (!name) return 'BF'
   return name
     .split(' ')
     .slice(0, 2)
@@ -53,13 +64,13 @@ function getUserInitials(name?: string) {
     .join('')
 }
 
+const SERIES: SerieCampeonato[] = ['a', 'b', 'c', 'd']
+
 export function PainelPrincipal() {
   const navigate = useNavigate()
   const location = useLocation()
   const { user, logout } = useAuth()
-  const [active, setActive] = useState<NavItemId>(
-    location.pathname === '/time-society' ? 'time-society' : 'classificacao',
-  )
+  const [active, setActive] = useState<NavItemId>(() => routeToNav(location.pathname) ?? 'classificacao')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -72,19 +83,27 @@ export function PainelPrincipal() {
     loading,
     error,
     round,
+    serie,
+    setSerie,
     favorite,
     cycleFavorite,
     refresh: refreshClassificacao,
   } = useClassificacao()
 
   const activeItem = navItemById[active]
+  const activeSource = navSourceById[active]
+  const headerKicker =
+    activeSource === 'brasileirao'
+      ? `${competitionName || 'Campeonato Brasileiro'}${round ? ` · ${round}` : ''}`
+      : 'BairroFut · o futebol do seu bairro'
 
   useEffect(() => {
-    if (location.pathname === '/time-society') {
-      setActive('time-society')
+    const routed = routeToNav(location.pathname)
+    if (routed) {
+      setActive(routed)
       return
     }
-    if (location.pathname === '/' && active === 'time-society') {
+    if (location.pathname === '/' && navItemById[active]?.path) {
       setActive('classificacao')
     }
   }, [location.pathname, active])
@@ -134,6 +153,18 @@ export function PainelPrincipal() {
       return <TimeSocietyRoute />
     }
 
+    if (active === 'calendario') {
+      return <CalendarioRoute />
+    }
+
+    if (active === 'relatorio-jogadores') {
+      return <RelatorioJogadoresRoute />
+    }
+
+    if (active === 'estatisticas') {
+      return <EstatisticasPartidasRoute />
+    }
+
     if (active === 'configuracoes') {
       return (
         <SectionView
@@ -163,7 +194,8 @@ export function PainelPrincipal() {
   function handleNavClick(itemId: NavItemId, opensSettings?: boolean) {
     setActive(itemId)
     setSidebarOpen(false)
-    if (itemId === 'time-society') navigate('/time-society')
+    const item = navItemById[itemId]
+    if (item.path) navigate(item.path)
     else if (location.pathname !== '/') navigate('/')
     if (opensSettings) setSettingsOpen(true)
   }
@@ -187,16 +219,8 @@ export function PainelPrincipal() {
       <aside
         className={`fixed inset-y-0 left-0 z-40 flex w-72 flex-col border-r border-sidebar-border bg-sidebar transition-transform duration-200 lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
       >
-        <div className="flex h-20 items-center justify-between border-b border-sidebar-border px-6">
-          <div className="flex items-center gap-3">
-            <div className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-              <Goal className="size-5" />
-            </div>
-            <div>
-              <p className="font-display text-lg font-bold tracking-tight text-sidebar-foreground">BETSECRETS</p>
-              <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-sidebar-foreground/50">futebol club</p>
-            </div>
-          </div>
+        <div className="flex h-20 items-center justify-between border-b border-sidebar-border px-5">
+          <BairroFutLogo wordmark subtitle="pelada do bairro" tone="light" />
           <button
             type="button"
             className="rounded-lg p-2 text-sidebar-foreground/60 hover:bg-sidebar-accent lg:hidden"
@@ -207,25 +231,33 @@ export function PainelPrincipal() {
           </button>
         </div>
 
-        <div className="border-b border-sidebar-border p-4">
-          <button
-            type="button"
-            className="flex w-full items-center justify-between rounded-xl bg-sidebar-accent px-4 py-3 text-left hover:bg-sidebar-accent/80"
-          >
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/50">Campeonato ativo</p>
-              <p className="mt-1 text-sm font-semibold text-sidebar-foreground">Brasileirão Série A</p>
-            </div>
-            <ChevronDown className="size-4 text-sidebar-foreground/50" />
-          </button>
-        </div>
-
         <nav className="flex-1 overflow-y-auto px-3 py-5" aria-label="Navegação principal">
           {navGroups.map((group) => (
-            <div className="mb-7" key={group.label}>
-              <p className="mb-2 px-3 font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-sidebar-foreground/40">
-                {group.label}
-              </p>
+            <div className="mb-6" key={group.label}>
+              <div className="mb-2 px-3">
+                <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-amber-200/80">
+                  {group.label}
+                </p>
+                <p className="mt-1 text-[11px] leading-4 text-sidebar-foreground/45">{group.description}</p>
+              </div>
+              {group.source === 'brasileirao' && (
+                <div className="mb-2 grid grid-cols-4 gap-1 px-3">
+                  {SERIES.map((item) => (
+                    <button
+                      key={item}
+                      type="button"
+                      onClick={() => setSerie(item)}
+                      className={`rounded-md px-1 py-1.5 font-mono text-[10px] uppercase tracking-wide ${
+                        serie === item
+                          ? 'bg-amber-300 text-emerald-950'
+                          : 'bg-sidebar-accent text-sidebar-foreground/70 hover:text-sidebar-foreground'
+                      }`}
+                    >
+                      Série {item}
+                    </button>
+                  ))}
+                </div>
+              )}
               <div className="flex flex-col gap-1">
                 {group.items.map((item) => {
                   const Icon = item.icon
@@ -293,7 +325,7 @@ export function PainelPrincipal() {
             </button>
             <div>
               <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                Temporada 2025 · Brasileirão
+                {headerKicker}
               </p>
               <h1 className="mt-1 font-display text-xl font-bold tracking-tight md:text-2xl">{activeItem.label}</h1>
             </div>
@@ -314,7 +346,7 @@ export function PainelPrincipal() {
             >
               <Settings className="size-4" />
             </button>
-            {active !== 'time-society' && (
+            {activeSource === 'brasileirao' && (
             <Button onClick={() => void handleRefresh()}>
               <RefreshCw className={`size-4 ${refreshing ? 'animate-spin' : ''}`} />
               <span className="hidden md:inline">Atualizar</span>
@@ -326,7 +358,7 @@ export function PainelPrincipal() {
           </div>
         </header>
 
-        <div className={`mx-auto px-5 py-7 md:px-10 md:py-10 ${active === 'time-society' ? 'max-w-[1700px]' : 'max-w-[1500px]'}`}>{content}</div>
+        <div className={`mx-auto px-5 py-7 md:px-10 md:py-10 ${active === 'time-society' || active === 'calendario' || active === 'relatorio-jogadores' || active === 'estatisticas' ? 'max-w-[1700px]' : 'max-w-[1500px]'}`}>{content}</div>
       </div>
 
       <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />

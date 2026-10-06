@@ -33,6 +33,7 @@ interface TeamHeaderProps {
   onEditTeam: () => void
   onNewPlayer: () => void
   onSaveLineup: () => void
+  savingLineup?: boolean
 }
 
 const statItems = [
@@ -55,6 +56,7 @@ export function TeamHeader({
   onEditTeam,
   onNewPlayer,
   onSaveLineup,
+  savingLineup,
 }: TeamHeaderProps) {
   return (
     <section className="space-y-4">
@@ -100,9 +102,9 @@ export function TeamHeader({
               <Plus className="size-4" />
               Novo Jogador
             </Button>
-            <Button onClick={onSaveLineup} disabled={!time}>
+            <Button onClick={onSaveLineup} disabled={!time || savingLineup}>
               <Save className="size-4" />
-              Salvar Escalação
+              {savingLineup ? 'Salvando...' : 'Salvar Escalação'}
             </Button>
           </div>
         </div>

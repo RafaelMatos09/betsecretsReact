@@ -4,9 +4,12 @@
   display: flex;
   flex-direction: column;
   gap: 2rem;
+  overflow-x: hidden;
+  color: #2a241c;
   background:
-    radial-gradient(circle at top right, rgba(170, 59, 255, 0.18), transparent 40%),
-    var(--bg);
+    radial-gradient(circle at top right, rgba(243, 193, 90, 0.35), transparent 32%),
+    repeating-linear-gradient(90deg, transparent, transparent 72px, rgba(27, 58, 42, 0.05) 72px, rgba(27, 58, 42, 0.05) 74px),
+    linear-gradient(180deg, #f6f1e4 0%, #e7f0e4 100%);
   box-sizing: border-box;
 }
 
@@ -37,9 +40,11 @@
 
 .auth-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(320px, 420px);
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 400px);
   gap: 2rem;
   align-items: center;
+  width: min(1080px, 100%);
+  margin-inline: auto;
   flex: 1;
 }
 
@@ -60,8 +65,8 @@
   font-size: 0.85rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  background: var(--accent-bg);
-  color: var(--accent);
+  background: rgba(27, 58, 42, 0.1);
+  color: #1b3a2a;
 }
 
 .live-dot {
@@ -74,13 +79,16 @@
 
 .auth-intro h1 {
   margin: 0;
-  font-size: clamp(2rem, 4vw, 3.25rem);
-  line-height: 1.05;
-  letter-spacing: -0.04em;
+  color: #1b3a2a;
+  font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  font-weight: 700;
+  font-size: clamp(2.4rem, 5vw, 4rem);
+  line-height: 0.95;
+  letter-spacing: -0.03em;
 }
 
 .auth-intro h1 em {
-  color: var(--accent);
+  color: #1b3a2a;
   font-style: normal;
 }
 
@@ -123,16 +131,16 @@
 }
 
 .avatar-stack b {
-  background: var(--accent-bg);
-  color: var(--accent);
+  background: rgba(243, 193, 90, 0.45);
+  color: #1b3a2a;
 }
 
 .quote-card {
   padding: 1rem 1.1rem;
-  border: 1px solid var(--border);
+  border: 1px solid rgba(27, 58, 42, 0.12);
   border-radius: 1rem;
-  background: rgba(255, 255, 255, 0.45);
-  box-shadow: var(--shadow);
+  background: rgba(255, 250, 240, 0.8);
+  box-shadow: 0 16px 40px rgba(42, 36, 28, 0.08);
   text-align: left;
 }
 
@@ -152,12 +160,15 @@
 }
 
 .quote-stars {
-  color: #f59e0b;
+  color: #8a5a12;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 0.75rem;
 }
 
 .quote-card p {
   margin-bottom: 0.75rem;
-  color: var(--text-h);
+  color: #2a241c;
 }
 
 .quote-card strong {
@@ -172,10 +183,10 @@
 
 .auth-card {
   padding: 1.5rem;
-  border: 1px solid var(--border);
+  border: 1px solid rgba(27, 58, 42, 0.12);
   border-radius: 1.25rem;
-  background: var(--bg);
-  box-shadow: var(--shadow);
+  background: #fffaf2;
+  box-shadow: 0 18px 40px rgba(42, 36, 28, 0.08);
   text-align: left;
 }
 
@@ -186,7 +197,7 @@
   padding: 0.35rem;
   margin-bottom: 1.25rem;
   border-radius: 999px;
-  background: var(--code-bg);
+  background: #efe6d4;
 }
 
 .mode-tabs button {
@@ -200,13 +211,14 @@
 }
 
 .mode-tabs button.active {
-  background: var(--bg);
-  color: var(--text-h);
-  box-shadow: var(--shadow);
+  background: #1b3a2a;
+  color: #f6f1e4;
+  box-shadow: none;
 }
 
 .form-heading h2 {
   margin-bottom: 0.35rem;
+  color: #1b3a2a;
 }
 
 .form-heading p {
@@ -225,7 +237,7 @@
   flex-direction: column;
   gap: 0.45rem;
   font-size: 0.92rem;
-  color: var(--text-h);
+  color: #2a241c;
 }
 
 .input-wrap {
@@ -233,14 +245,14 @@
   align-items: center;
   gap: 0.65rem;
   padding: 0.75rem 0.85rem;
-  border: 1px solid var(--border);
+  border: 1px solid rgba(27, 58, 42, 0.16);
   border-radius: 0.85rem;
-  background: var(--code-bg);
+  background: #fff;
 }
 
 .input-wrap:focus-within {
-  border-color: var(--accent-border);
-  box-shadow: 0 0 0 4px var(--accent-bg);
+  border-color: #1b3a2a;
+  box-shadow: 0 0 0 4px rgba(27, 58, 42, 0.12);
 }
 
 .input-wrap input {
@@ -280,7 +292,7 @@
 
 .check-label a,
 .form-options a {
-  color: var(--accent);
+  color: #1b3a2a;
   text-decoration: none;
 }
 
@@ -303,15 +315,15 @@
   padding: 0.9rem 1rem;
   font: inherit;
   font-weight: 600;
-  color: white;
-  background: linear-gradient(135deg, #8b2bd6, var(--accent));
+  color: #1b3a2a;
+  background: linear-gradient(135deg, #f3c15a, #e2a93b);
   cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .primary-button:hover {
   transform: translateY(-1px);
-  box-shadow: 0 12px 24px rgba(170, 59, 255, 0.28);
+  box-shadow: 0 12px 24px rgba(27, 58, 42, 0.18);
 }
 
 .primary-button:disabled {
